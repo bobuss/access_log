@@ -1,0 +1,1 @@
+ grep -E "(GET|POST).*1.1 200" access_2013_01_24.log | cut -d ' ' -f 17-18,21,24 | grep -v admin

@@ -1,18 +1,15 @@
 //
-// GIT statistics
+// ROK web service access statistics
 //
 
-var authorsChart = dc.rowChart(".authors-chart");
-var hourOfDayChart = dc.barChart(".hour-of-day-chart");
-var dayOfWeekChart = dc.rowChart(".day-of-week-chart");
-var volumeChart = dc.barChart(".daily-volume-chart");
+var routesChart = dc.rowChart(".routes-chart");
 
-var dateFormat = d3.time.format("%Y-%m-%d");
-var datetimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S %Z");
+var meanTimeDisplay = dc.numberDisplay(".meanTime");
+var meanSizeDisplay = dc.numberDisplay(".meanSize");
 
-var dsv = d3.dsv("|", "text/plain");
+var dsv = d3.dsv(" ", "text/plain");
 
-dsv("gitstats.txt", function(data) {
+dsv("access_stats_2.txt", function(data) {
 
   //
   // I. Data part
@@ -21,107 +18,86 @@ dsv("gitstats.txt", function(data) {
 
   var all = ndx.groupAll();
 
-  // authors
-  var author = ndx.dimension(function(d) {
-    return d.author;
+  // methods
+  var method = ndx.dimension(function(d) {
+    return d.method;
   })
-  var authorGroup = author.group();
+  var methodGroup = method.group();
 
-  // hours of the day
-  var hourOfDay = ndx.dimension(function (d) {
-    var hour = d.datetime.getHours();
-    return hour;
+  // route
+  var route = ndx.dimension(function (d) {
+    return d.route;
   });
-  var hourOfDayGroup = hourOfDay.group();
+  var routeGroup = route.group();
 
-  // days of the week
-  var dayOfWeek = ndx.dimension(function (d) {
-    var day = d.datetime.getDay();
-    var name=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    return day + "." + name[day];
+  // size
+  var size = ndx.dimension(function (d) {
+    return d.size;
   });
-  var dayOfWeekGroup = dayOfWeek.group();
+  var sizeGroup = size.group();
 
-  // commits by day
-  var commitByDays = ndx.dimension(function (d) {
-    return d.date;
+  // time of the day
+  var time = ndx.dimension(function (d) {
+    return d.time;
   });
-  var commitByDaysGroup = commitByDays.group();
+  var timeGroup = time.group();
+
+  var meansGroup = ndx.groupAll().reduce(
+    function (p, v) {
+      ++p.n;
+      p.time_tot += v.time;
+      p.size_tot += v.size;
+      return p;
+    },
+    function (p, v) {
+      --p.n;
+      p.time_tot -= v.time;
+      p.size_tot -= v.size;
+      return p;
+    },
+    function () { return {n:0,time_tot:0,size_tot:0}; }
+  );
+
+  var average_size = function(d) {
+      return d.n ? d.size_tot / d.n : 0;
+  };
+
+   var average_time = function(d) {
+      return d.n ? d.time_tot / d.n : 0;
+  };
 
   //
   // II. Chart parts
   //
 
-  // authors
-  authorsChart.width(990)
-              .height(30 * authorGroup.size())
-              .margins({top: 10, left: 10, right: 10, bottom: 30})
-              .group(authorGroup)
-              .dimension(author)
-              .ordering(function(d, i) {
-                 return -d.value;
-              })
-              .colors(d3.scale.category20())
-              .label(function (d) {
-                  return d.key;
-              })
-              .title(function (d) {
-                  return d.value;
-              })
-              .elasticX(true)
-              .xAxis().ticks(4);
+  meanTimeDisplay
+       .valueAccessor(average_time)
+       .group(meansGroup);
 
-  // hours of the day
-  hourOfDayChart.width(620)
-                .height(180)
-                .margins({top: 10, right: 10, bottom: 30, left: 40})
-                .dimension(hourOfDay)
-                .group(hourOfDayGroup)
-                .elasticY(true)
-                .gap(1)
-                .round(dc.round.floor)
-                .x(d3.scale.linear().domain([0, 24]))
-                .renderHorizontalGridLines(true)
-                .filterPrinter(function (filters) {
-                    var filter = filters[0], s = "";
-                    s += parseInt(filter[0], 10) + "h -> " + parseInt(filter[1], 10) + "h";
-                    return s;
-                })
-                .xAxis()
-                .tickFormat(function (v) {
-                    return v + "h";
-                });
+  meanSizeDisplay
+       .formatNumber(d3.format(".4s"))
+       .valueAccessor(average_size)
+       .group(meansGroup);
 
-  hourOfDayChart.yAxis().ticks(5);
+  // route
+  routesChart.width(990)
+             .height(30 * routeGroup.size())
+             .margins({top: 10, left: 10, right: 10, bottom: 30})
+             .dimension(route)
+             .group(routeGroup)
+             .ordering(function(d, i) {
+                return -d.value;
+             })
+             .colors(d3.scale.category20())
+             .label(function (d) {
+                 return d.key;
+             })
+             .title(function (d) {
+                 return d.value;
+             })
+             .elasticX(true)
+             .xAxis().ticks(4);
 
-  // day of the week
-  dayOfWeekChart.width(360)
-                .height(30 * dayOfWeekGroup.size())
-                .margins({top: 10, left: 10, right: 10, bottom: 30})
-                .group(dayOfWeekGroup)
-                .dimension(dayOfWeek)
-                .colors(d3.scale.category10())
-                .label(function (d) {
-                    return d.key.split(".")[1];
-                })
-                .title(function (d) {
-                    return d.value;
-                })
-                .elasticX(true)
-                .xAxis().ticks(4);
-
-  // commits by day
-  volumeChart.width(990)
-             .height(160)
-             .margins({top: 10, right: 10, bottom: 30, left: 40})
-             .dimension(commitByDays)
-             .group(commitByDaysGroup)
-             .elasticY(true)
-             .centerBar(true)
-             .gap(0)
-             .x(d3.time.scale().domain([commitByDays.bottom(1)[0].date, commitByDays.top(1)[0].date]))
-             .round(d3.time.day.round)
-             .xUnits(d3.time.days);
 
   // count selected commits
   dc.dataCount(".dc-data-count").dimension(ndx)
@@ -129,20 +105,17 @@ dsv("gitstats.txt", function(data) {
 
   // render everything
   dc.renderAll();
+
 }).response(function(request) {
 
   return dsv.parseRows(request.responseText, function(d) {
     // format style :
-    // git log --format='%ai|%an'
-    // datetime|author
-    // "2013-10-17 18:14:56 +0200|Bertrand TORNIL"
-    var datetime = datetimeFormat.parse(d[0]);
+    // GET /api/campaign_chapters 108 188
     return {
-      datetime: datetime,
-      date : new Date(datetime.getFullYear(),
-                      datetime.getMonth(),
-                      datetime.getDate()),
-      author: d[1].toLowerCase()
+      method: d[0],
+      route: d[1].replace(/(\d+)/, ":id"),
+      size: +d[2],
+      time: +d[3]
     };
   });
 
