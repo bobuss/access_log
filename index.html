@@ -29,7 +29,7 @@
 <div class="container">
 
   <div class="page-header">
-    <h1>ROK routes statistics</h1>
+    <h1>LOTD routes statistics</h1>
   </div>
 
   <div class="row">
@@ -38,9 +38,6 @@
       <div class="dc-data-count">
         <span class="filter-count"></span> over <span class="total-count"></span> | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
       </div>
-    </div>
-
-    <div class="col-md-6">
       <h3>Services statistics</h3>
       <div class="meanTime">
         Average response time: <span class="number-display">_</span> ms.
@@ -50,13 +47,43 @@
         Average response size: <span class="number-display">_</span> bytes.
       </div>
     </div>
+
+    <div class="col-md-6">
+      <h3>Routes&nbsp;:</h3>
+      <div id="routes">
+        <a class="reset" href="javascript:routesChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+      </div>
+    </div>
   </div>
 
   <div class="row">
     <div class="col-md-6">
-      <h3>Routes</h3>
-      <div class="routes-chart">
-        <a class="reset" href="javascript:routesChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+      <h3>Routes by response time (ms)</h3>
+      <div id="routes-time">
+        <a class="reset" href="javascript:routesChartTime.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <h3>Routes by size (kb)</h3>
+      <div id="routes-size">
+        <a class="reset" href="javascript:routesChartSize.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h3>time (ms)</h3>
+      <div id="time">
+        <a class="reset" href="javascript:timeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <h3>size (kb)</h3>
+      <div id="size">
+        <a class="reset" href="javascript:sizeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
       </div>
     </div>
   </div>
